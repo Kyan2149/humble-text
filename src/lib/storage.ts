@@ -6,6 +6,7 @@ export interface Note {
   referencedVerses: string[]; // verse keys like "matthew-5-5"
   createdAt: number;
   updatedAt: number;
+  folderId?: string | null;
 }
 
 const NOTES_KEY = 'logos-study-notes';

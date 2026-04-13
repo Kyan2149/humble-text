@@ -187,7 +187,7 @@ export function useCloudNotes() {
     return tempNote;
   }, [user]);
 
-  const updateNote = useCallback(async (id: string, updates: Partial<Pick<Note, 'title' | 'content' | 'folderId'>>) => {
+  const updateNote = useCallback(async (id: string, updates: Partial<Pick<Note, 'title' | 'content'>> & { folderId?: string | null }) => {
     setNotes(prev => prev.map(n => {
       if (n.id !== id) return n;
       const updated = { ...n, ...updates, updatedAt: Date.now() };
@@ -201,7 +201,7 @@ export function useCloudNotes() {
     if (user) {
       const note = notes.find(n => n.id === id);
       const content = updates.content ?? note?.content ?? '';
-      const dbUpdates: Record<string, unknown> = {};
+      const dbUpdates: { title?: string; content?: string; tags?: string[]; referenced_verses?: string[]; folder_id?: string | null } = {};
       if (updates.title !== undefined) dbUpdates.title = updates.title;
       if (updates.content !== undefined) {
         dbUpdates.content = updates.content;
