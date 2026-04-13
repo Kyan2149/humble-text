@@ -2,23 +2,39 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Note } from '@/lib/storage';
 import { parseReferences, formatRef, getVerseRangeText } from '@/lib/bibleUtils';
 import type { BibleData } from '@/lib/bibleUtils';
-import { Plus, Trash2, Eye, Edit3, FileText } from 'lucide-react';
+import type { Folder, NoteVersion } from '@/hooks/useCloudNotes';
+import { Plus, Trash2, Eye, Edit3, FileText, History, Save, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VerseHoverCard } from './VerseHoverCard';
+import { FoldersView } from './FoldersView';
+import { VersionHistory } from './VersionHistory';
 
 interface NotesEditorProps {
   notes: Note[];
   bible: BibleData | null;
-  onAddNote: () => Note;
-  onUpdateNote: (id: string, updates: Partial<Pick<Note, 'title' | 'content'>>) => void;
+  folders: Folder[];
+  onAddNote: (folderId?: string | null) => Promise<Note>;
+  onUpdateNote: (id: string, updates: Partial<Pick<Note, 'title' | 'content'>> & { folderId?: string | null }) => void;
   onDeleteNote: (id: string) => void;
   onRefClick: (book: string, chapter: number, verse: number) => void;
   showEditorPanel: boolean;
   onToggleEditor: () => void;
+  onAddFolder: (name: string, parentId?: string | null) => void;
+  onDeleteFolder: (id: string) => void;
+  onRenameFolder: (id: string, name: string) => void;
+  onSaveVersion: (noteId: string) => void;
+  onGetVersions: (noteId: string) => Promise<NoteVersion[]>;
+  onRestoreVersion: (noteId: string, version: NoteVersion) => void;
+  isGuest: boolean;
 }
 
-export function NotesEditor({ notes, bible, onAddNote, onUpdateNote, onDeleteNote, onRefClick, showEditorPanel, onToggleEditor }: NotesEditorProps) {
+export function NotesEditor({
+  notes, bible, folders, onAddNote, onUpdateNote, onDeleteNote, onRefClick,
+  showEditorPanel, onToggleEditor, onAddFolder, onDeleteFolder, onRenameFolder,
+  onSaveVersion, onGetVersions, onRestoreVersion, isGuest,
+}: NotesEditorProps) {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [showFolders, setShowFolders] = useState(false);
   const selectedNote = notes.find(n => n.id === selectedNoteId);
 
   if (!selectedNote) {
@@ -29,28 +45,51 @@ export function NotesEditor({ notes, bible, onAddNote, onUpdateNote, onDeleteNot
             <FileText className="w-5 h-5 text-primary" />
             <h2 className="font-serif text-lg font-semibold">Notes</h2>
           </div>
-          <button onClick={() => { const n = onAddNote(); setSelectedNoteId(n.id); }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-            <Plus className="w-4 h-4" /> New Note
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowFolders(!showFolders)}
+              className={cn("p-2 rounded-lg transition-colors", showFolders ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}>
+              <FolderOpen className="w-4 h-4" />
+            </button>
+            <button onClick={async () => { const n = await onAddNote(); setSelectedNoteId(n.id); }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+              <Plus className="w-4 h-4" /> New Note
+            </button>
+          </div>
         </div>
-        <div className="flex-1 overflow-auto p-4 space-y-2">
-          {notes.length === 0 ? (
-            <div className="text-center text-muted-foreground py-12">
-              <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No notes yet. Create your first note!</p>
+
+        <div className="flex-1 overflow-auto">
+          {showFolders && (
+            <div className="p-3 border-b">
+              <FoldersView
+                folders={folders}
+                notes={notes}
+                onAddFolder={onAddFolder}
+                onDeleteFolder={onDeleteFolder}
+                onRenameFolder={onRenameFolder}
+                onNoteSelect={setSelectedNoteId}
+                onMoveNote={(noteId, folderId) => onUpdateNote(noteId, { folderId })}
+              />
             </div>
-          ) : notes.map(note => (
-            <div key={note.id} onClick={() => setSelectedNoteId(note.id)} className="note-card">
-              <h3 className="font-serif font-semibold text-base">{note.title || 'Untitled'}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{note.content.slice(0, 120) || 'Empty note'}</p>
-              {note.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {note.tags.map(t => <span key={t} className="tag-pill">{t}</span>)}
-                </div>
-              )}
-            </div>
-          ))}
+          )}
+
+          <div className="p-4 space-y-2">
+            {notes.length === 0 ? (
+              <div className="text-center text-muted-foreground py-12">
+                <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">No notes yet. Create your first note!</p>
+              </div>
+            ) : (!showFolders ? notes : []).map(note => (
+              <div key={note.id} onClick={() => setSelectedNoteId(note.id)} className="note-card">
+                <h3 className="font-serif font-semibold text-base">{note.title || 'Untitled'}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{note.content.slice(0, 120) || 'Empty note'}</p>
+                {note.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {note.tags.map(t => <span key={t} className="tag-pill">{t}</span>)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -66,12 +105,17 @@ export function NotesEditor({ notes, bible, onAddNote, onUpdateNote, onDeleteNot
       onRefClick={onRefClick}
       showEditor={showEditorPanel}
       onToggleEditor={onToggleEditor}
+      onSaveVersion={onSaveVersion}
+      onGetVersions={onGetVersions}
+      onRestoreVersion={onRestoreVersion}
+      isGuest={isGuest}
     />
   );
 }
 
 function NoteDetail({
-  note, bible, onBack, onUpdate, onDelete, onRefClick, showEditor, onToggleEditor
+  note, bible, onBack, onUpdate, onDelete, onRefClick, showEditor, onToggleEditor,
+  onSaveVersion, onGetVersions, onRestoreVersion, isGuest,
 }: {
   note: Note;
   bible: BibleData | null;
@@ -81,9 +125,14 @@ function NoteDetail({
   onRefClick: (book: string, chapter: number, verse: number) => void;
   showEditor: boolean;
   onToggleEditor: () => void;
+  onSaveVersion: (noteId: string) => void;
+  onGetVersions: (noteId: string) => Promise<NoteVersion[]>;
+  onRestoreVersion: (noteId: string, version: NoteVersion) => void;
+  isGuest: boolean;
 }) {
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
+  const [showHistory, setShowHistory] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -111,7 +160,6 @@ function NoteDetail({
     const parts: { type: 'text' | 'ref-link' | 'ref-inline'; value: string; ref?: typeof refs[0] }[] = [];
     let lastIndex = 0;
 
-    // Sort refs by position in content
     const refPositions = refs.map(ref => {
       const idx = content.indexOf(ref.raw, lastIndex);
       return { ref, index: idx >= 0 ? idx : content.indexOf(ref.raw) };
@@ -142,6 +190,19 @@ function NoteDetail({
       <div className="border-b px-4 py-3 flex items-center gap-2">
         <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground">← Back</button>
         <div className="flex-1" />
+        {!isGuest && (
+          <>
+            <button onClick={() => onSaveVersion(note.id)} title="Save version"
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+              <Save className="w-4 h-4" />
+            </button>
+            <button onClick={() => setShowHistory(!showHistory)} title="Version history"
+              className={cn("p-2 rounded-lg transition-colors",
+                showHistory ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}>
+              <History className="w-4 h-4" />
+            </button>
+          </>
+        )}
         <button onClick={onToggleEditor} className={cn(
           "p-2 rounded-lg transition-colors",
           showEditor ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
@@ -207,6 +268,18 @@ function NoteDetail({
             )}
           </div>
         </div>
+
+        {/* Version History Panel */}
+        {showHistory && !isGuest && (
+          <div className="w-72 border-l shrink-0">
+            <VersionHistory
+              noteId={note.id}
+              getVersions={onGetVersions}
+              onRestore={onRestoreVersion}
+              onClose={() => setShowHistory(false)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
