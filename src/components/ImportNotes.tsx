@@ -31,9 +31,8 @@ async function ensureFolderPath(
     } else {
       const id = await onAddFolder(p, parentId);
       if (!id) return parentId;
-      parentId = id;
-      // also push to local folders so subsequent siblings find it
       folders.push({ id, name: p, parent_id: parentId } as Folder);
+      parentId = id;
     }
     cache[key] = parentId!;
   }
