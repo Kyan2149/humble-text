@@ -232,7 +232,7 @@ const Index = () => {
 
       <AuthModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <ImportNotes open={showImport} onClose={() => setShowImport(false)}
-        folders={folders} onAddFolder={async (n, p) => { await addFolder(n, p); return null; }}
+        folders={folders} onAddFolder={addFolder as any}
         onAddNote={addNote} onUpdateNote={updateNote} />
       {showMergePrompt && (
         <MergePrompt
