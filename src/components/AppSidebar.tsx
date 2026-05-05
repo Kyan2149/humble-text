@@ -1,9 +1,9 @@
-import { Book, FileText, Hash, Search, ChevronLeft, ChevronRight, Bookmark, User, LogOut, LogIn } from 'lucide-react';
+import { Book, FileText, Hash, Search, ChevronLeft, ChevronRight, Bookmark, User, LogOut, LogIn, Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import logoImg from '/favicon.png';
 
-export type NavView = 'bible' | 'notes' | 'topics' | 'search' | 'saved';
+export type NavView = 'bible' | 'notes' | 'topics' | 'search' | 'saved' | 'graph' | 'profile';
 
 interface AppSidebarProps {
   activeView: NavView;
@@ -17,8 +17,9 @@ const navItems: { id: NavView; label: string; icon: typeof Book }[] = [
   { id: 'bible', label: 'Bible', icon: Book },
   { id: 'notes', label: 'Notes', icon: FileText },
   { id: 'topics', label: 'Topics', icon: Hash },
-  { id: 'search', label: 'Search', icon: Search },
   { id: 'saved', label: 'Saved', icon: Bookmark },
+  { id: 'graph', label: 'Connections', icon: Network },
+  { id: 'profile', label: 'Profile', icon: User },
 ];
 
 export function AppSidebar({ activeView, onViewChange, collapsed, onToggleCollapse, onLoginClick }: AppSidebarProps) {
