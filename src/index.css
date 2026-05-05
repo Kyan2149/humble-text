@@ -172,8 +172,36 @@
     @apply rounded-lg border p-4 cursor-pointer transition-all duration-200 hover:shadow-md;
     background: hsl(var(--card));
   }
+  .note-card:hover { border-color: hsl(var(--primary) / 0.4); }
 
-  .note-card:hover {
-    border-color: hsl(var(--primary) / 0.4);
+  .tiptap-editor .ProseMirror {
+    @apply outline-none min-h-[300px] px-1 py-2 leading-relaxed;
+    font-family: var(--font-sans);
   }
+  .tiptap-editor .ProseMirror h1 {
+    @apply text-3xl font-bold mt-4 mb-2;
+    font-family: var(--font-serif);
+  }
+  .tiptap-editor .ProseMirror h2 {
+    @apply text-xl font-semibold mt-3 mb-1.5;
+    font-family: var(--font-serif);
+  }
+  .tiptap-editor .ProseMirror p { @apply text-base my-1; }
+  .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before,
+  .tiptap-editor .ProseMirror h1.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    @apply text-muted-foreground/40 float-left h-0 pointer-events-none;
+  }
+  .verse-inline {
+    color: #8B4513;
+    font-style: italic;
+    font-family: var(--font-serif);
+  }
+  .dark .verse-inline { color: #D2A679; }
+  .verse-ref-pill {
+    @apply inline-flex items-center px-1.5 py-0 rounded text-sm font-medium cursor-pointer;
+    background: hsl(var(--primary) / 0.12);
+    color: hsl(var(--primary));
+  }
+  .verse-ref-pill:hover { background: hsl(var(--primary) / 0.22); }
 }

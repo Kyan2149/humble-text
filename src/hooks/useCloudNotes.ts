@@ -252,7 +252,7 @@ export function useCloudNotes() {
   }, [updateNote]);
 
   // Folders
-  const addFolder = useCallback(async (name: string, parentId?: string | null) => {
+  const addFolder = useCallback(async (name: string, parentId?: string | null): Promise<string> => {
     const tempId = crypto.randomUUID();
     const folder: Folder = { id: tempId, name, parent_id: parentId || null };
     setFolders(prev => [...prev, folder]);
@@ -265,8 +265,10 @@ export function useCloudNotes() {
       }).select().single();
       if (data) {
         setFolders(prev => prev.map(f => f.id === tempId ? { ...f, id: data.id } : f));
+        return data.id;
       }
     }
+    return tempId;
   }, [user]);
 
   const deleteFolder = useCallback(async (id: string) => {
