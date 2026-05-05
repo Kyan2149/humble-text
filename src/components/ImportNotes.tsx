@@ -56,13 +56,7 @@ export function ImportNotes({ open, onClose, folders, onAddFolder, onAddNote, on
         const rel: string = file.webkitRelativePath || file.name;
         const parts = rel.split('/').filter(Boolean);
         const fileName = parts.pop()!;
-        const folderId = parts.length ? await ensureFolderPath(parts, folders, cache, async (n, p) => {
-          const id = crypto.randomUUID();
-          await onAddFolder(n, p);
-          // try to find newly added folder by name+parent
-          const found = folders.find(f => f.name === n && (f.parent_id || null) === (p || null));
-          return found?.id || id;
-        }) : null;
+        const folderId = parts.length ? await ensureFolderPath(parts, folders, cache, onAddFolder) : null;
         const text = await file.text();
         const title = fileName.replace(/\.[^.]+$/, '');
         const note = await onAddNote(folderId);
