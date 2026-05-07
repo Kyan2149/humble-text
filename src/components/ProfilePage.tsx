@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getStreak, pingStreak } from '@/lib/streak';
-import { Flame, User, LogIn, LogOut, FileText, Bookmark } from 'lucide-react';
+import { Flame, User, LogIn, LogOut, FileText, Bookmark, GraduationCap, ChevronDown, ChevronRight } from 'lucide-react';
 import { VerseOfDay } from './VerseOfDay';
 import type { BibleData } from '@/lib/bibleUtils';
 
