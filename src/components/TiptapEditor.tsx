@@ -41,6 +41,17 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
           }
         }
 
+        // "/" at start of line -> turn line into heading (h1)
+        if (event.key === '/') {
+          const ed = (editor as Editor | null);
+          const { $from } = view.state.selection;
+          if (ed && $from.parentOffset === 0) {
+            event.preventDefault();
+            ed.chain().focus().setNode('heading', { level: 1 }).run();
+            return true;
+          }
+        }
+
         // Hierarchy on Enter
         if (event.key === 'Enter' && !event.shiftKey) {
           const ed = (editor as Editor | null);
