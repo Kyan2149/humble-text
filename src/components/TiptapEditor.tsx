@@ -136,7 +136,8 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
             out += `<span data-verse-ref data-book="${esc(r.book)}" data-chapter="${r.chapter}" data-verse="${r.verseStart}" class="verse-ref-pill">${esc(r.raw)}</span>`;
           } else {
             const text = getVerseRangeText(bible, r);
-            out += `<span data-verse-inline class="verse-inline">${esc(text || r.raw)}</span>`;
+            const body = text ? `${r.raw}: ${text}` : r.raw;
+            out += `<span data-verse-inline class="verse-inline">${esc(body)}</span>`;
           }
           last = idx + r.raw.length;
         }
