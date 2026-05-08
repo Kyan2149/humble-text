@@ -116,21 +116,27 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
   const doRefScan = useCallback((ed: Editor) => {
     if (!bible) return;
     const html = ed.getHTML();
-    // Skip text already inside data-verse-inline / data-verse-ref spans
-    // Strategy: walk text nodes via DOM
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
     let changed = false;
+
+    // Identify the currently-edited top-level block so we DEFER lowercase refs
+    // until the caret leaves that line.
+    const currentBlockIndex = ed.state.selection.$from.index(0);
+    const currentBlockEl = tmp.children[currentBlockIndex] as HTMLElement | undefined;
 
     const walk = (node: Node) => {
       if (node.nodeType === 3) {
         const parent = node.parentElement;
         if (parent?.closest('[data-verse-inline],[data-verse-ref]')) return;
+        const inCurrentBlock = !!(currentBlockEl && currentBlockEl.contains(node));
         const original = node.nodeValue || '';
         const corrected = autoCorrectChunk(original);
         const refs = parseReferences(corrected);
-        if (refs.length === 0) {
-          if (corrected !== original) {
+        // Filter: skip lowercase refs if caret is still on this line
+        const activeRefs = refs.filter(r => r.isCapitalized || !inCurrentBlock);
+        if (activeRefs.length === 0) {
+          if (corrected !== original && !inCurrentBlock) {
             node.nodeValue = corrected;
             changed = true;
           }
@@ -139,16 +145,22 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
         // Build replacement HTML
         let out = '';
         let last = 0;
-        for (const r of refs) {
+        for (const r of activeRefs) {
           const idx = corrected.indexOf(r.raw, last);
           if (idx < 0) continue;
           out += esc(corrected.slice(last, idx));
+          // Capitalize the displayed reference so it renders as a clickable link.
+          const displayRaw = capitalizeRef(r.raw);
+          const pill = `<span data-verse-ref data-book="${esc(r.book)}" data-chapter="${r.chapter}" data-verse="${r.verseStart}" class="verse-ref-pill">${esc(displayRaw)}</span>`;
           if (r.isCapitalized) {
-            out += `<span data-verse-ref data-book="${esc(r.book)}" data-chapter="${r.chapter}" data-verse="${r.verseStart}" class="verse-ref-pill">${esc(r.raw)}</span>`;
+            out += pill;
           } else {
             const text = getVerseRangeText(bible, r);
-            const body = text ? `${r.raw}: ${text}` : r.raw;
-            out += `<span data-verse-inline class="verse-inline">${esc(body)}</span>`;
+            if (text) {
+              out += `${pill}: <span data-verse-inline class="verse-inline">${esc(text)}</span>`;
+            } else {
+              out += pill;
+            }
           }
           last = idx + r.raw.length;
         }
