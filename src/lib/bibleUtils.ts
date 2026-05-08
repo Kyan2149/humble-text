@@ -113,7 +113,8 @@ export function parseReferences(text: string): ParsedRef[] {
     const chapter = parseInt(match[2], 10);
     const verseStart = parseInt(match[3], 10);
     const verseEnd = match[4] ? parseInt(match[4], 10) : verseStart;
-    const isCapitalized = bookInput[0] === bookInput[0].toUpperCase() && bookInput[0] !== bookInput[0].toLowerCase();
+    const firstAlpha = bookInput.match(/[a-zA-Z]/)?.[0] || '';
+    const isCapitalized = firstAlpha === firstAlpha.toUpperCase() && firstAlpha !== firstAlpha.toLowerCase();
 
     results.push({
       book,
