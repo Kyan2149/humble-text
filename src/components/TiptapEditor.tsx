@@ -206,6 +206,16 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
   );
 }
 
+function capitalizeRef(raw: string): string {
+  // Uppercase the first alphabetic character (handles "1 cor 13:4" → "1 Cor 13:4")
+  let done = false;
+  return raw.replace(/[a-zA-Z]/, (c) => {
+    if (done) return c;
+    done = true;
+    return c.toUpperCase();
+  });
+}
+
 function hydrateInitial(content: string): string {
   if (!content) return '<h1></h1>';
   if (content.trim().startsWith('<')) return content;
