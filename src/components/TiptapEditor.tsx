@@ -126,17 +126,23 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
     const currentBlockEl = tmp.children[currentBlockIndex] as HTMLElement | undefined;
 
     const walk = (node: Node) => {
+      // Skip the entire block the caret is currently in — defer all processing
+      // (autoCorrect + ref replacement) until the user moves to another line.
+      // This prevents setContent from disrupting active typing (e.g. spurious
+      // new lines while writing in a subheading).
+      if (currentBlockEl && (node === currentBlockEl || (node.nodeType === 1 && currentBlockEl.contains(node as HTMLElement)))) {
+        return;
+      }
       if (node.nodeType === 3) {
         const parent = node.parentElement;
         if (parent?.closest('[data-verse-inline],[data-verse-ref]')) return;
-        const inCurrentBlock = !!(currentBlockEl && currentBlockEl.contains(node));
+        if (currentBlockEl && currentBlockEl.contains(node)) return;
         const original = node.nodeValue || '';
         const corrected = autoCorrectChunk(original);
         const refs = parseReferences(corrected);
-        // Filter: skip lowercase refs if caret is still on this line
-        const activeRefs = refs.filter(r => r.isCapitalized || !inCurrentBlock);
+        const activeRefs = refs;
         if (activeRefs.length === 0) {
-          if (corrected !== original && !inCurrentBlock) {
+          if (corrected !== original) {
             node.nodeValue = corrected;
             changed = true;
           }
