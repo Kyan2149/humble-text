@@ -117,6 +117,7 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
         }
       } catch {}
     },
+  });
 
   // Debounced ref scan — replaces lowercase refs with inline italic verse text, capitalized with clickable ref
   const scanTimerRef = useRef<number | undefined>(undefined);
