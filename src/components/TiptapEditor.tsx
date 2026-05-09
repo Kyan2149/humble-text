@@ -72,6 +72,7 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2] } }),
       Placeholder.configure({ placeholder: placeholder || 'Start writing...' }),
+      Image.configure({ inline: false, allowBase64: true, HTMLAttributes: { class: 'note-image' } }),
       VerseRefMark,
       VerseInlineMark,
     ],
