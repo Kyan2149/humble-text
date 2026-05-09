@@ -266,11 +266,127 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialContent.slice(0, 20), editor]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const insertImageFromFile = useCallback(async (file: File) => {
+    if (!editor || !file.type.startsWith('image/')) return;
+    try {
+      const dataUrl = await compressImage(file, 1600, 0.85);
+      editor.chain().focus().setImage({ src: dataUrl }).run();
+    } catch (e) {
+      console.error('Image insert failed', e);
+    }
+  }, [editor]);
+
+  // Paste & drop image support
+  useEffect(() => {
+    if (!editor) return;
+    const dom = editor.view.dom;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const it of Array.from(items)) {
+        if (it.type.startsWith('image/')) {
+          const f = it.getAsFile();
+          if (f) { e.preventDefault(); insertImageFromFile(f); return; }
+        }
+      }
+    };
+    const onDrop = (e: DragEvent) => {
+      const files = e.dataTransfer?.files;
+      if (!files || files.length === 0) return;
+      const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
+      if (imgs.length) { e.preventDefault(); imgs.forEach(insertImageFromFile); }
+    };
+    dom.addEventListener('paste', onPaste);
+    dom.addEventListener('drop', onDrop);
+    return () => {
+      dom.removeEventListener('paste', onPaste);
+      dom.removeEventListener('drop', onDrop);
+    };
+  }, [editor, insertImageFromFile]);
+
   return (
-    <div className="tiptap-wrap flex-1 overflow-auto">
+    <div className="tiptap-wrap flex-1 overflow-auto relative">
+      <div className="sticky top-0 z-10 flex gap-2 px-2 py-1 bg-background/80 backdrop-blur border-b border-border">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-muted text-muted-foreground"
+          title="Insert image"
+        >
+          <ImagePlus className="w-4 h-4" /> Image
+        </button>
+        <button
+          type="button"
+          onClick={() => cameraInputRef.current?.click()}
+          className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-muted text-muted-foreground"
+          title="Take photo"
+        >
+          <Camera className="w-4 h-4" /> Camera
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []);
+            files.forEach(insertImageFromFile);
+            e.target.value = '';
+          }}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []);
+            files.forEach(insertImageFromFile);
+            e.target.value = '';
+          }}
+        />
+      </div>
       <EditorContent editor={editor} className="tiptap-editor" />
     </div>
   );
+}
+
+async function compressImage(file: File, maxDim: number, quality: number): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+  // Skip compression for small images or non-rasterizable types
+  if (file.size < 200 * 1024 || file.type === 'image/gif' || file.type === 'image/svg+xml') {
+    return dataUrl;
+  }
+  return new Promise<string>((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const scale = Math.min(maxDim / width, maxDim / height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve(dataUrl);
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
 }
 
 function capitalizeRef(raw: string): string {
