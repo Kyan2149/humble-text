@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect, useRef, useCallback } from 'react';
 import type { BibleData } from '@/lib/bibleUtils';
-import { parseReferences, getVerseRangeText, getVerseKey } from '@/lib/bibleUtils';
+import { parseReferences, getVerseRangeText } from '@/lib/bibleUtils';
 import { autoCorrectChunk } from '@/lib/autoCorrect';
 
 interface Props {
