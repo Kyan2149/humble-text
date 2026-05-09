@@ -22,6 +22,7 @@ const esc = (s: string) =>
 export function TiptapEditor({ bible, initialContent, onChange, onRefClick, placeholder }: Props) {
   const lastEnterRef = useRef<number>(0);
   const lastEnterFromRef = useRef<string>(''); // 'h1'|'h2'|'p'
+  const lastBlockIndexRef = useRef<number>(-1);
 
   const editor = useEditor({
     extensions: [
@@ -102,6 +103,19 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
       // Debounced ref detection
       scheduleRefScan(ed);
       onChange(ed.getHTML());
+    },
+    onSelectionUpdate: ({ editor: ed }) => {
+      // When caret moves to a different top-level block, run a scan so that
+      // refs left behind in the previous block get processed (turned into links
+      // / inline verse text). This is needed because onUpdate only fires on
+      // content changes, not pure caret movement.
+      try {
+        const idx = ed.state.selection.$from.index(0);
+        if (idx !== lastBlockIndexRef.current) {
+          lastBlockIndexRef.current = idx;
+          scheduleRefScan(ed);
+        }
+      } catch {}
     },
   });
 
