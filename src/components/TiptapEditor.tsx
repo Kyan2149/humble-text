@@ -104,7 +104,19 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
       scheduleRefScan(ed);
       onChange(ed.getHTML());
     },
-  });
+    onSelectionUpdate: ({ editor: ed }) => {
+      // When caret moves to a different top-level block, run a scan so that
+      // refs left behind in the previous block get processed (turned into links
+      // / inline verse text). This is needed because onUpdate only fires on
+      // content changes, not pure caret movement.
+      try {
+        const idx = ed.state.selection.$from.index(0);
+        if (idx !== lastBlockIndexRef.current) {
+          lastBlockIndexRef.current = idx;
+          scheduleRefScan(ed);
+        }
+      } catch {}
+    },
 
   // Debounced ref scan — replaces lowercase refs with inline italic verse text, capitalized with clickable ref
   const scanTimerRef = useRef<number | undefined>(undefined);
