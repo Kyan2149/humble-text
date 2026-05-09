@@ -1,9 +1,10 @@
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
+import { Mark, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect, useRef, useCallback } from 'react';
 import type { BibleData } from '@/lib/bibleUtils';
-import { parseReferences, getVerseRangeText, getVerseKey } from '@/lib/bibleUtils';
+import { parseReferences, getVerseRangeText } from '@/lib/bibleUtils';
 import { autoCorrectChunk } from '@/lib/autoCorrect';
 
 interface Props {
@@ -19,6 +20,47 @@ const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+const VerseRefMark = Mark.create({
+  name: 'verseRef',
+  inclusive: false,
+  addAttributes() {
+    return {
+      book: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-book'),
+        renderHTML: (attributes) => attributes.book ? { 'data-book': attributes.book } : {},
+      },
+      chapter: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-chapter'),
+        renderHTML: (attributes) => attributes.chapter ? { 'data-chapter': attributes.chapter } : {},
+      },
+      verse: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-verse'),
+        renderHTML: (attributes) => attributes.verse ? { 'data-verse': attributes.verse } : {},
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'span[data-verse-ref]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes({ 'data-verse-ref': '', class: 'verse-ref-pill' }, HTMLAttributes), 0];
+  },
+});
+
+const VerseInlineMark = Mark.create({
+  name: 'verseInline',
+  inclusive: false,
+  parseHTML() {
+    return [{ tag: 'span[data-verse-inline]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes({ 'data-verse-inline': '', class: 'verse-inline' }, HTMLAttributes), 0];
+  },
+});
+
 export function TiptapEditor({ bible, initialContent, onChange, onRefClick, placeholder }: Props) {
   const lastEnterRef = useRef<number>(0);
   const lastEnterFromRef = useRef<string>(''); // 'h1'|'h2'|'p'
@@ -28,6 +70,8 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2] } }),
       Placeholder.configure({ placeholder: placeholder || 'Start writing...' }),
+      VerseRefMark,
+      VerseInlineMark,
     ],
     content: hydrateInitial(initialContent),
     editorProps: {
