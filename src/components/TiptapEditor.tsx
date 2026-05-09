@@ -22,6 +22,7 @@ const esc = (s: string) =>
 export function TiptapEditor({ bible, initialContent, onChange, onRefClick, placeholder }: Props) {
   const lastEnterRef = useRef<number>(0);
   const lastEnterFromRef = useRef<string>(''); // 'h1'|'h2'|'p'
+  const lastBlockIndexRef = useRef<number>(-1);
 
   const editor = useEditor({
     extensions: [
