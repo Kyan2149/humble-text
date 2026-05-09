@@ -204,4 +204,11 @@
     color: hsl(var(--primary));
   }
   .verse-ref-pill:hover { background: hsl(var(--primary) / 0.22); }
+  .tiptap-editor .ProseMirror img.note-image {
+    @apply rounded-md my-3 max-w-full h-auto block;
+    box-shadow: 0 1px 3px hsl(var(--foreground) / 0.1);
+  }
+  .tiptap-editor .ProseMirror img.ProseMirror-selectednode {
+    outline: 2px solid hsl(var(--primary));
+  }
 }
