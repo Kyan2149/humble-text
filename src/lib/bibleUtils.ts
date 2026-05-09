@@ -84,7 +84,11 @@ export const BOOK_ORDER = [
 ];
 
 export function resolveBookName(input: string): string | null {
-  const lower = input.toLowerCase().trim();
+  const lower = input
+    .toLowerCase()
+    .replace(/\./g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   return BOOK_ALIASES[lower] || null;
 }
 
@@ -98,7 +102,7 @@ export interface ParsedRef {
 }
 
 // Matches patterns like: "mat 5:5", "Mat 5:5-7", "1 cor 13:4-8", "john 3:16"
-const REF_REGEX = /\b((?:\d\s*)?[a-zA-Z]+)\s+(\d+):(\d+)(?:-(\d+))?\b/g;
+const REF_REGEX = /\b((?:\d\s*)?[a-zA-Z][a-zA-Z.]*(?:\s+[a-zA-Z][a-zA-Z.]*){0,2})\s+(\d+):(\d+)(?:-(\d+))?\b/g;
 
 export function parseReferences(text: string): ParsedRef[] {
   const results: ParsedRef[] = [];
