@@ -89,13 +89,22 @@ export function TiptapEditor({ bible, initialContent, onChange, onRefClick, plac
           }
         }
 
-        // "/" at start of line -> turn line into heading (h1)
+        // "/" at start of empty line -> cycle node type
+        // 1st `/` => h1, `//` => h2 (subheading), `///` => paragraph (body)
+        // Useful on phones where Shift+Enter is unavailable.
         if (event.key === '/') {
           const ed = (editor as Editor | null);
           const { $from } = view.state.selection;
-          if (ed && $from.parentOffset === 0) {
+          const node = $from.parent;
+          if (ed && $from.parentOffset === 0 && node.content.size === 0) {
             event.preventDefault();
-            ed.chain().focus().setNode('heading', { level: 1 }).run();
+            const nodeType = node.type.name;
+            const level = nodeType === 'heading' ? node.attrs.level : 0;
+            const current = level === 1 ? 'h1' : level === 2 ? 'h2' : 'p';
+            const next = current === 'p' ? 'h1' : current === 'h1' ? 'h2' : 'p';
+            if (next === 'h1') ed.chain().focus().setNode('heading', { level: 1 }).run();
+            else if (next === 'h2') ed.chain().focus().setNode('heading', { level: 2 }).run();
+            else ed.chain().focus().setNode('paragraph').run();
             return true;
           }
         }
