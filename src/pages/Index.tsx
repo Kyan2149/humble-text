@@ -128,7 +128,7 @@ const Index = () => {
     );
   };
 
-  const showBible = navView === 'bible' || splitMode === 'split';
+  const showBible = navView === 'bible' || (splitMode === 'split' && navView === 'notes');
   const showSecondary = navView !== 'bible' || splitMode === 'notes' || splitMode === 'split';
 
   return (
