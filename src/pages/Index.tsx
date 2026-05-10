@@ -128,7 +128,7 @@ const Index = () => {
     );
   };
 
-  const showBible = navView === 'bible' || (splitMode === 'split' && (navView === 'notes'));
+  const showBible = navView === 'bible' || splitMode === 'split';
   const showSecondary = navView !== 'bible' || splitMode === 'notes' || splitMode === 'split';
 
   return (
@@ -145,7 +145,7 @@ const Index = () => {
       {/* Mobile drawer */}
       {mobileSidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileSidebarOpen(false)}>
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-background shadow-xl" onClick={e => e.stopPropagation()}>
+          <div className="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-background shadow-xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-end p-2"><button onClick={() => setMobileSidebarOpen(false)}><X className="w-5 h-5" /></button></div>
             <AppSidebar activeView={navView}
               onViewChange={v => { setNavView(v); setMobileSidebarOpen(false); if (v === 'bible') setSplitMode('bible'); }}
@@ -158,9 +158,11 @@ const Index = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
         <div className="border-b px-2 sm:px-4 py-2 flex items-center gap-2 bg-background">
-          <button className="md:hidden p-2" onClick={() => setMobileSidebarOpen(true)}><Menu className="w-5 h-5" /></button>
+          <button className="md:hidden p-2 -ml-1" onClick={() => setMobileSidebarOpen(true)} aria-label="Menu">
+            <Menu className="w-5 h-5" />
+          </button>
 
-          <div className="hidden sm:flex gap-1 bg-muted rounded-lg p-0.5">
+          <div className="flex gap-1 bg-muted rounded-lg p-0.5 shrink-0">
             {[
               { mode: 'bible' as SplitMode, label: 'Bible', icon: BookOpen },
               { mode: 'split' as SplitMode, label: 'Split', icon: PanelLeft },
@@ -171,7 +173,7 @@ const Index = () => {
                   if (mode === 'bible') setNavView('bible');
                   else if (mode === 'notes') setNavView('notes');
                 }}
-                className={cn("px-2.5 py-1 text-xs font-medium rounded-md transition-colors",
+                className={cn("px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium rounded-md transition-colors",
                   splitMode === mode ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}>
                 {label}
@@ -187,11 +189,22 @@ const Index = () => {
           )}
         </div>
 
-        <div className="flex-1 flex overflow-hidden pb-14 md:pb-0">
-          {/* Mobile: stack — show only one panel. Desktop: respect splitMode */}
+        {/*
+          Layout rules:
+          - Desktop: row layout, both panels side-by-side when split.
+          - Mobile (portrait): stacked top/bottom — Bible on top, secondary on bottom when split.
+          - Non-split: single panel fills.
+        */}
+        <div className={cn(
+          "flex-1 flex overflow-hidden pb-14 md:pb-0",
+          splitMode === 'split' ? "flex-col md:flex-row" : "flex-row",
+        )}>
           {showBible && (
-            <div className={cn("flex flex-col overflow-hidden",
-              splitMode === 'split' ? "hidden md:flex md:flex-1 md:border-r" : "flex-1",
+            <div className={cn(
+              "flex flex-col overflow-hidden",
+              splitMode === 'split'
+                ? "flex-1 min-h-0 border-b md:border-b-0 md:border-r"
+                : "flex-1",
               navView !== 'bible' && splitMode !== 'split' && "hidden",
             )}>
               <BibleReader
@@ -208,12 +221,12 @@ const Index = () => {
           )}
 
           {showSecondary && navView !== 'bible' && (
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               {renderSecondary()}
             </div>
           )}
 
-          {activeVerse && navView === 'bible' && (
+          {activeVerse && navView === 'bible' && splitMode !== 'split' && (
             <RightPanel bible={bible} activeVerse={activeVerse}
               selectedBook={selectedBook} selectedChapter={selectedChapter}
               selectedVerseNum={selectedVerseNum}
